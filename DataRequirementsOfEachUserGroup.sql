@@ -225,18 +225,19 @@ EXEC ViewArticleOfAuthorReviewing 3012346, 1012346;
 --(ii.6). Xem danh sách các bài báo của một tác giả mà mình đã phản biện trong 3 năm gần đây nhất.
 CREATE PROCEDURE ViewArticleOfAuthorReviewingIn3Y (@ReviewerSsn VARCHAR (15), @AuthorSsn VARCHAR (15))
 AS
-	SELECT * 
-	FROM (SELECT ArticleID 
+	SELECT ArticleID, AssignDate
+	FROM (SELECT ArticleID, AssignDate
 		  FROM ASSIGN JOIN ARTICLE ON ArticleID = ID
-		  WHERE ReviewerSsn = @ReviewerSsn AND Status = 0 AND AssignDate > DATEADD(year,-3,GETDATE())) as d 
+		  WHERE ReviewerSsn = @ReviewerSsn AND AssignDate > DATEADD(year,-3,GETDATE())) as d 
 		  JOIN 
 		  (SELECT ID 
 		  FROM WRITE 
 		  WHERE Ssn = @AuthorSsn) as dd 
 		  ON d.ArticleID = dd.ID
+	ORDER BY AssignDate DESC
 GO
 drop proc ViewArticleOfAuthorReviewingIn3Y
-EXEC ViewArticleOfAuthorReviewingIn3Y 3012346, 1012345;
+EXEC ViewArticleOfAuthorReviewingIn3Y 3012352, 1012352;
 ---------------------------------------------------------------------------------------------
 
 --(ii.7). Xem danh sách tác giả có nhiều bài báo nhất mà mình đã phản biện.
