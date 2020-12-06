@@ -58,7 +58,7 @@ EXEC ViewArticleByStatus 'RESEARCH', 2
 ----------------------------------------------------------------------------------------------
 --(i.5). Xem danh sách các bài báo theo mỗi loại (nghiên cứu, phản biện sách, tổng quan) chưa được xử lý phản biện.
 -- FIX
-EXEC ViewArticleByStatus 'REVIEW_BOOK', 0
+EXEC ViewArticleByStatus 'REVIEW_BOOK', 2
 ----------------------------------------------------------------------------------------------
 --(i.6). Xem danh sách các bài báo theo mỗi loại (nghiên cứu, phản biện sách, tổng quan) được xuất bản.
 -- FIX
@@ -159,7 +159,6 @@ BEGIN
 	IF EXISTS(SELECT * FROM EVALUATE WHERE ArticleID = @ID)
 		UPDATE EVALUATE SET ReviewerSsn = @ReviewerSsn WHERE ArticleID = @ID;
 END
-SELECT * FROM EVALUATE
 GO
 select * from REVIEWER
 select * from EVALUATE
@@ -292,9 +291,8 @@ CREATE PROCEDURE ViewArticleReviewedBestResult (@ReviewerSsn VARCHAR (15))
 AS
 	SELECT TOP 3 * 
 	FROM ARTICLE 
-	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = '3012345') AND Result = 3;
+	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn) AND Result = 3;
 GO
-
 select * from ARTICLE ORDER BY status desc
 select * from EVALUATE
 EXEC ViewArticleReviewedBestResult 3012345;
@@ -306,7 +304,7 @@ CREATE PROCEDURE ViewArticleReviewedWorstResult (@ReviewerSsn VARCHAR (15))
 AS
 	SELECT TOP 3 * 
 	FROM ARTICLE 
-	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = '3012345') AND Result = 0;
+	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn) AND Result = 0;
 GO
 select * from ARTICLE ORDER BY result asc
 select * from EVALUATE
