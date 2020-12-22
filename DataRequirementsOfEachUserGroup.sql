@@ -1,16 +1,24 @@
 USE PUBLICATION;
 --(i). Ban biên tập
 --(i.1). Cập nhật phân công phản biện cho một bài báo.
-CREATE PROCEDURE updateAssign (@articleId VARCHAR(15), @reviewerSsn VARCHAR(15), @editorialBoardSsn VARCHAR(15), @assignDate DATE)
+CREATE PROCEDURE updateAssign (@articleId VARCHAR(15), @action VARCHAR(255),@reviewerSsn VARCHAR(15), @editorialBoardSsn VARCHAR(15), @assignDate DATE)
 AS
 BEGIN
-	IF EXISTS(select * from ASSIGN where ArticleID=@articleId)
-	   update ASSIGN set ReviewerSsn=@reviewerSsn, EditorialBoardSsn=@editorialBoardSsn, AssignDate=@assignDate 
-	   where ArticleID=@articleId
+	IF @action = 'UPDATE' OR @action = 'INSERT'
+	BEGIN
+		IF EXISTS(select * from ASSIGN where ArticleID=@articleId)
+			update ASSIGN set ReviewerSsn=@reviewerSsn, EditorialBoardSsn=@editorialBoardSsn, AssignDate=@assignDate 
+			where ArticleID=@articleId
+		IF NOT EXISTS(select * from ASSIGN where ArticleID=@articleId)
+			INSERT INTO ASSIGN VALUES( @articleId, @reviewerSsn, @editorialBoardSsn, @assignDate )
+	END
+	IF @action = 'DELETE'
+		DELETE FROM ASSIGN WHERE ArticleID=@articleId
 END
 GO
-select * from ASSIGN
-EXEC updateAssign 412345,3012345, 2012345, '2020-11-20'
+drop proc updateAssign
+--select * from ASSIGN
+--EXEC updateAssign 412360 , 'UPDATE' ,3012345, 2012345, '2020-11-22'
 --------------------------------------------------------------------------------------------
 --(i.2). Cập nhật trạng thái xử lý cho một bài báo: 
 -- phản biện = 0, phản hồi phản biện = 1, hoàn tất phản biện = 2, xuất bản = 3, đã đăng = 4.
@@ -140,29 +148,42 @@ EXEC CountArticleByType 'ARTICLE', 4
 
 --(ii). Phản biện
 --(ii.1). Cập nhật thông tin cá nhân.
-CREATE PROCEDURE UpdateInformation (@Ssn VARCHAR(15), @Email VARCHAR(100), @Job VARCHAR(255), @Fname VARCHAR(50), @LName VARCHAR(50), @Address TEXT, @WorkPlace VARCHAR(255))
+CREATE PROCEDURE UpdateInformation (@action VARCHAR (255), @Ssn VARCHAR(15), @Email VARCHAR(100), @Job VARCHAR(255), @Fname VARCHAR(50), @LName VARCHAR(50), @Address TEXT, @WorkPlace VARCHAR(255))
 AS
 BEGIN
-	IF EXISTS(SELECT * FROM SCIENTIST WHERE Ssn = @Ssn)
-	   UPDATE SCIENTIST set Email = @Email, Job = @Job, Fname = @Fname, LName = @LName, Address = @Address, WorkPlace = @WorkPlace
-	   WHERE Ssn = @Ssn
+	IF @action = 'UPDATE' OR @action = 'INSERT'
+	BEGIN
+		IF EXISTS (SELECT * FROM SCIENTIST WHERE Ssn = @Ssn)
+			UPDATE SCIENTIST set Email = @Email, Job = @Job, Fname = @Fname, LName = @LName, Address = @Address, WorkPlace = @WorkPlace
+			WHERE Ssn = @Ssn
+		IF NOT EXISTS(SELECT * FROM SCIENTIST WHERE Ssn = @Ssn)
+			INSERT INTO SCIENTIST VALUES( @Ssn, @Email, @Job, @Fname, @LName, @Address, @WorkPlace)
+	END
+	IF @action = 'DELETE'
+		DELETE FROM SCIENTIST WHERE Ssn=@Ssn
 END
 GO
 select * from SCIENTIST
-EXEC UpdateInformation @Ssn = 3012345, @Email = 'abc@gmmail.com', @Job='Teacher', @Fname='Tom', @LName = 'Cruise', @Address = '221B Baker .St', @WorkPlace = 'London' ;
+EXEC UpdateInformation @action = 'UPDATE', @Ssn = 3012345, @Email = 'abc@gmmail.com', @Job='Teacher', @Fname='Tom', @LName = 'Cruise', @Address = '221B Baker .St', @WorkPlace = 'London' ;
 --------------------------------------------------------------------------------------------
 
 --(ii.2). Cập nhật phản biện cho một bài báo.
-CREATE PROCEDURE UpdateCriteriaReviewer (@ID VARCHAR(15), @ReviewerSsn VARCHAR(15))
+CREATE PROCEDURE UpdateCriteriaReviewer (@action VARCHAR (255), @ReviewerSsn VARCHAR(15), @ArticleID VARCHAR(15), @CriteriaID VARCHAR(15),  @ReviewContent TEXT, @NoteForEB TEXT, @NoteForAU TEXT)
 AS
 BEGIN
-	IF EXISTS(SELECT * FROM EVALUATE WHERE ArticleID = @ID)
-		UPDATE EVALUATE SET ReviewerSsn = @ReviewerSsn WHERE ArticleID = @ID;
+	IF @action = 'UPDATE' OR @action = 'INSERT'
+	BEGIN
+		IF EXISTS(SELECT * FROM EVALUATE WHERE ArticleID = @ArticleID)
+			UPDATE EVALUATE SET ReviewContent = @ReviewContent, NoteForEB = @NoteForEB, NoteForAU = @NoteForAU  WHERE ArticleID = @ArticleID;
+		IF NOT EXISTS(SELECT * FROM EVALUATE WHERE ArticleID = @ArticleID)
+			INSERT INTO EVALUATE VALUES( @ReviewerSsn,@ArticleID, @CriteriaID , @ReviewContent, @NoteForEB, @NoteForAU )
+	END
+	IF @action = 'DELETE'
+		DELETE FROM EVALUATE WHERE ArticleID = @ArticleID
 END
 GO
-select * from REVIEWER
 select * from EVALUATE
-EXEC UpdateCriteriaReviewer 412345, 3012347;
+EXEC UpdateCriteriaReviewer 'UPDATE',3012345, 412355, 5, "abc abc abc", "None", "Yesss";
 ---------------------------------------------------------------------------------------------
 
 --(ii.3). Xem danh sách các bài báo theo mỗi loại (nghiên cứu, phản biện sách, tổng quan) mà mình đang phản biện.
@@ -366,29 +387,46 @@ EXEC ViewNArticleReviewedWithResult @ReviewerSsn = '3012351', @typeArticle = 'RE
 
 -- (iii). Tác giả liên lạc
 -- (iii.1). Cập nhật thông tin cá nhân.
-CREATE PROCEDURE updateProfile (@ssn VARCHAR(15), @email VARCHAR(100),  @job VARCHAR(255), @fname VARCHAR(50), @lname VARCHAR(50), @address TEXT, @workplace VARCHAR(255), @field VARCHAR(15))
+CREATE PROCEDURE updateProfile (@action VARCHAR(255), @ssn VARCHAR(15), @email VARCHAR(100),  @job VARCHAR(255), @fname VARCHAR(50), @lname VARCHAR(50), @address TEXT, @workplace VARCHAR(255), @field VARCHAR(15))
 AS
 BEGIN
-	UPDATE SCIENTIST SET Email=@email, Job=@job, Fname=@fname, LName = @lname, Address = @address, WorkPlace = @workplace
-	WHERE Ssn = @ssn;
-	UPDATE FIELD SET FieldID=@field
-	WHERE Ssn = @ssn;
+	IF @action = 'UPDATE' OR @action = 'INSERT'
+	BEGIN
+		IF EXISTS(SELECT * FROM SCIENTIST WHERE Ssn = @ssn)
+			UPDATE SCIENTIST SET Email=@email, Job=@job, Fname=@fname, LName = @lname, Address = @address, WorkPlace = @workplace
+			WHERE Ssn = @ssn
+			UPDATE FIELD SET FieldID=@field
+			WHERE Ssn = @ssn;
+		IF NOT EXISTS(SELECT * FROM SCIENTIST WHERE Ssn = @ssn)
+			INSERT INTO SCIENTIST VALUES( @ssn, @email, @job , @fname, @lname, @address, @workplace )
+			INSERT INTO FIELD VALUES ( @ssn, @field)
+	END
+	IF @action = 'DELETE'
+		DELETE FROM SCIENTIST WHERE Ssn = @ssn
+		DELETE FROM FIELD WHERE FieldID=@field
 END
 GO
 select * from SCIENTIST
-EXEC updateProfile @ssn='1012345', @email='evans@gmmail.com', @job='Streamer', @fname='Lewandoski', @lname = 'Uzumaki', @address = '127 East 55th Street, Midtown East, New York, US', @WorkPlace = 'NK Company', @field='Music';
+EXEC updateProfile @action = 'UPDATE', @ssn='1012346', @email='@gmmail.com', @job='Teacher', @fname='Naruto', @lname = 'Uzumaki', @address = '127 East 55th Street, Midtown East, New York, US', @WorkPlace = 'NK Company', @field='Music';
 ---------------------------------------------------------------------------------------------
 -- (iii.2). Cập nhật thông tin của một bài báo đang được nộp.
-
-CREATE PROCEDURE updateArticle (@id VARCHAR(15), @title TEXT, @summary TEXT, @articlefile VARCHAR(255))
+CREATE PROCEDURE updateArticle (@action VARCHAR(255),@AuthorSsn VARCHAR(15), @id VARCHAR(15), @title TEXT, @summary TEXT, @articlefile VARCHAR(255), @sentDate DATE, @detail TEXT, @AnnoucementDate DATE)
 AS
 BEGIN
-	UPDATE ARTICLE SET Title=@title,Summary=@summary ,ArticleFile=@articlefile 
-	WHERE ID = @id;
+	IF @action = 'UPDATE' OR @action = 'INSERT'
+	BEGIN
+		IF EXISTS(SELECT * FROM ARTICLE WHERE ID = @id)
+			UPDATE ARTICLE SET Title=@title,Summary=@summary ,ArticleFile=@articlefile 
+			WHERE ID = @id;
+		IF NOT EXISTS(SELECT * FROM ARTICLE WHERE ID = @id)
+			INSERT INTO ARTICLE VALUES( @id, @title, @summary , @articlefile, NULL, @sentDate, @AuthorSsn, NULL, NULL,@detail,@AnnoucementDate )
+	END
+	IF @action = 'DELETE'
+		DELETE FROM ARTICLE WHERE ID = @id
 END
 GO
 select * from ARTICLE
-EXEC updateArticle @id='412345', @title='Road to Ninja', @summary='Naruto and the leaf ninja drive off a group of White Zetsu posing as fallen Akatsuki members', @articlefile='RoadToNinja.pdf';
+EXEC updateArticle @action = 'UPDATE', @AuthorSsn = 1012346, @id= 412345, @title='Road to Ninja', @summary='Naruto and the leaf ninja drive off a group of White Zetsu posing as fallen Akatsuki members', @articlefile='RoadToNinja.pdf', @sentDate = '2010-07-03', @detail= 'aaaaa', @AnnoucementDate = NULL;
 ---------------------------------------------------------------------------------------------
 -- (iii.3). Xem thông tin các tác giả của một bài báo.
 CREATE PROCEDURE getAuthorInfoOfArticle(@id VARCHAR(15))
