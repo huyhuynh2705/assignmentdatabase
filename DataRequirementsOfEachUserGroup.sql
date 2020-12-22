@@ -286,30 +286,31 @@ END
 GO
 EXEC get3YearsHaveTopArticleReviewed 3012346;
 ---------------------------------------------------------------------------------------------
+-------------------(ii.10) and (ii.11) are replaced by (ii.13)-------------------------------
+----(ii.10). Xem 3 bài báo mà mình đã phản biện có kết quả tốt nhất (acceptance).
+--CREATE PROCEDURE ViewArticleReviewedBestResult (@ReviewerSsn VARCHAR (15))
+--AS
+--	SELECT TOP 3 * 
+--	FROM ARTICLE 
+--	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn) AND Result = 3;
+--GO
+--select * from ARTICLE ORDER BY status desc
+--select * from EVALUATE
+--EXEC ViewArticleReviewedBestResult 3012345;
+-----------------------------------------------------------------------------------------------
 
---(ii.10). Xem 3 bài báo mà mình đã phản biện có kết quả tốt nhất (acceptance).
-CREATE PROCEDURE ViewArticleReviewedBestResult (@ReviewerSsn VARCHAR (15))
-AS
-	SELECT TOP 3 * 
-	FROM ARTICLE 
-	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn) AND Result = 3;
-GO
-select * from ARTICLE ORDER BY status desc
-select * from EVALUATE
-EXEC ViewArticleReviewedBestResult 3012345;
----------------------------------------------------------------------------------------------
+----(ii.11). Xem 3 bài báo mà mình đã phản biện có kết quả thấp nhất (rejection).
 
---(ii.11). Xem 3 bài báo mà mình đã phản biện có kết quả thấp nhất (rejection).
-
-CREATE PROCEDURE ViewArticleReviewedWorstResult (@ReviewerSsn VARCHAR (15))
-AS
-	SELECT TOP 3 * 
-	FROM ARTICLE 
-	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn) AND Result = 0;
-GO
-select * from ARTICLE ORDER BY result asc
-select * from EVALUATE
-EXEC ViewArticleReviewedWorstResult 3012351;
+--CREATE PROCEDURE ViewArticleReviewedWorstResult (@ReviewerSsn VARCHAR (15))
+--AS
+--	SELECT TOP 3 * 
+--	FROM ARTICLE 
+--	WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn) AND Result = 0;
+--GO
+--select * from ARTICLE ORDER BY result asc
+--select * from EVALUATE
+--EXEC ViewArticleReviewedWorstResult 3012351;
+-------------------(ii.10) and (ii.11) are replaced by (ii.13)-------------------------------
 ---------------------------------------------------------------------------------------------
 
 --(ii.12). Xem trung bình số bài báo mỗi năm mà mình đã phản biện trong 5 năm gần đây nhất.
@@ -328,6 +329,39 @@ BEGIN
 END
 GO
 EXEC getNumOfArticleReviewedin5Years 3012351;
+
+---------------------------------------------------------------------------------------------
+--(ii.13). Xem n bài báo theo từng loại mà mình đã phản biện theo các kết quả.
+CREATE PROCEDURE ViewNArticleReviewedWithResult (@ReviewerSsn VARCHAR (15),@typeArticle VARCHAR(255), @result INT, @nArticle INT)
+AS
+BEGIN
+	IF @typeArticle = 'RESEARCH' 
+		SELECT TOP(@nArticle) * 
+		FROM ARTICLE 
+		WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn)
+		AND ID IN(SELECT ID FROM RESEARCH)
+		AND Result = @result
+	IF @typeArticle = 'OVERVIEW'
+		SELECT TOP(@nArticle) * 
+		FROM ARTICLE 
+		WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn)
+		AND ID IN(SELECT ID FROM OVERVIEW)
+		AND Result = @result
+	IF @typeArticle = 'REVIEW_BOOK'
+		SELECT TOP(@nArticle) * 
+		FROM ARTICLE 
+		WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn)
+		AND ID IN(SELECT ID FROM REVIEW_BOOK)
+		AND Result = @result
+	IF @typeArticle = 'ARTICLE'
+		SELECT TOP(@nArticle) * 
+		FROM ARTICLE 
+		WHERE ID IN (SELECT ArticleID FROM EVALUATE WHERE ReviewerSsn = @ReviewerSsn)
+		AND Result = @result
+END
+GO
+
+EXEC ViewNArticleReviewedWithResult @ReviewerSsn = '3012351', @typeArticle = 'RESEARCH', @result = 0, @nArticle = 3;
 ---------------------------------------------------------------------------------------------------------------------------------
 
 -- (iii). Tác giả liên lạc
@@ -343,6 +377,7 @@ END
 GO
 select * from SCIENTIST
 EXEC updateProfile @ssn='1012345', @email='evans@gmmail.com', @job='Streamer', @fname='Lewandoski', @lname = 'Uzumaki', @address = '127 East 55th Street, Midtown East, New York, US', @WorkPlace = 'NK Company', @field='Music';
+---------------------------------------------------------------------------------------------
 -- (iii.2). Cập nhật thông tin của một bài báo đang được nộp.
 
 CREATE PROCEDURE updateArticle (@id VARCHAR(15), @title TEXT, @summary TEXT, @articlefile VARCHAR(255))
@@ -354,6 +389,7 @@ END
 GO
 select * from ARTICLE
 EXEC updateArticle @id='412345', @title='Road to Ninja', @summary='Naruto and the leaf ninja drive off a group of White Zetsu posing as fallen Akatsuki members', @articlefile='RoadToNinja.pdf';
+---------------------------------------------------------------------------------------------
 -- (iii.3). Xem thông tin các tác giả của một bài báo.
 CREATE PROCEDURE getAuthorInfoOfArticle(@id VARCHAR(15))
 AS
@@ -367,8 +403,8 @@ END
 GO
 
 EXEC getAuthorInfoOfArticle @id='412345';
+---------------------------------------------------------------------------------------------
 -- (iii.4). Xem trạng thái của một bài báo
-
 CREATE PROCEDURE getStatusofArticle(@id  VARCHAR(15))
 AS
 BEGIN
@@ -378,8 +414,8 @@ BEGIN
 END
 GO
 EXEC getStatusofArticle @id='412345';
+---------------------------------------------------------------------------------------------
 -- (iii.5). Xem kết quả phản biện của một bài báo.
-
 CREATE PROCEDURE getResultofArticle (@id VARCHAR(15))
 AS
 BEGIN
@@ -391,8 +427,8 @@ GO
 select * from EVALUATE
 select * from ARTICLE
 EXEC getResultofArticle @id='412346';
+---------------------------------------------------------------------------------------------
 -- (iii.6). Xem danh sách các bài báo trong một năm.
-
 CREATE PROCEDURE getListArticle(@ssn VARCHAR(15))
 AS
 BEGIN
@@ -403,8 +439,8 @@ END
 GO
 select * from ARTICLE
 EXEC getListArticle @ssn = '1012351';
+---------------------------------------------------------------------------------------------
 -- (iii.7). Xem danh sách các bài báo đã đăng trong một năm.
-
 CREATE PROCEDURE getListArticleAccepted(@ssn VARCHAR(15))
 AS
 BEGIN
@@ -416,8 +452,8 @@ GO
 
 select * from ARTICLE
 EXEC getListArticleAccepted @ssn = '1012355';
+---------------------------------------------------------------------------------------------
 -- (iii.8). Xem danh sách các bài báo đang được xuất bản.
-
 CREATE PROCEDURE getListArticlePublishing(@ssn VARCHAR(15))
 AS
 BEGIN
@@ -428,8 +464,8 @@ END
 GO
 select * from ARTICLE
 EXEC getListArticlePublishing @ssn = '1012352';
+---------------------------------------------------------------------------------------------
 -- (iii.9). Xem danh sách các bài báo có kết quả thấp nhất (rejection).
-
 CREATE PROCEDURE getListArticleRejected(@ssn VARCHAR(15))
 AS
 BEGIN
@@ -444,6 +480,7 @@ GO
 select * from ARTICLE
 select * from EVALUATE
 EXEC getListArticleRejected @ssn='1012352';
+---------------------------------------------------------------------------------------------
 -- (iii.10). Xem tổng số bài báo đã gởi tạp chí mỗi năm trong 5 năm gần đây nhất.
 CREATE PROCEDURE getNumArticleIn5Years(@ssn VARCHAR(15))
 AS
@@ -456,6 +493,7 @@ BEGIN
 END
 GO
 EXEC getNumArticleIn5Years @ssn='1012345';
+---------------------------------------------------------------------------------------------
 -- (iii.11). Xem tổng số bài báo nghiên cứu được đăng mỗi năm trong 5 năm gần đây nhất.
 CREATE PROCEDURE getListResearchArticleAcceptedIn5Years(@ssn VARCHAR(15))
 AS
@@ -470,6 +508,7 @@ GO
 select * from RESEARCH
 select * from ARTICLE
 EXEC getListResearchArticleAcceptedIn5Years @ssn='1012356';
+---------------------------------------------------------------------------------------------
 -- (iii.12). Xem tổng số bài báo tổng quan được đăng mỗi năm trong 5 năm gần đây nhất.
 CREATE PROCEDURE getListOverviewArticleAcceptedIn5Years(@ssn VARCHAR(15))
 AS
@@ -484,3 +523,36 @@ GO
 select * from OVERVIEW
 select * from ARTICLE
 EXEC getListOverviewArticleAcceptedIn5Years @ssn='1012345';
+---------------------------------------------------------------------------------------------
+-- (iii.13). Xem tổng số bài báo theo loại trong n năm gần nhất.
+CREATE PROCEDURE getListArticleInNYears(@ssn VARCHAR(15), @typeArticle VARCHAR(255), @nYear INT )
+AS
+BEGIN
+	IF @typeArticle = 'RESEARCH' 
+		SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
+		FROM ARTICLE
+		WHERE AuthorSSn= @ssn AND SentDate > DATEADD(year,-@nYear,GETDATE()) AND ID IN (SELECT ID FROM RESEARCH)
+		GROUP BY DATEPART(YEAR,SentDate)
+		ORDER BY DATEPART(YEAR,SentDate) DESC
+	IF @typeArticle = 'OVERVIEW'
+		SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
+		FROM ARTICLE
+		WHERE AuthorSSn= @ssn AND SentDate > DATEADD(year,-@nYear,GETDATE()) AND ID IN (SELECT ID FROM OVERVIEW)
+		GROUP BY DATEPART(YEAR,SentDate)
+		ORDER BY DATEPART(YEAR,SentDate) DESC
+	IF @typeArticle = 'REVIEW_BOOK'
+		SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
+		FROM ARTICLE
+		WHERE AuthorSSn= @ssn AND SentDate > DATEADD(year,-@nYear,GETDATE()) AND ID IN (SELECT ID FROM REVIEW_BOOK)
+		GROUP BY DATEPART(YEAR,SentDate)
+		ORDER BY DATEPART(YEAR,SentDate) DESC
+	IF @typeArticle = 'ARTICLE'
+		SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
+		FROM ARTICLE
+		WHERE AuthorSSn= @ssn AND SentDate > DATEADD(year,-@nYear,GETDATE()) AND ID IN (SELECT ID FROM ARTICLE)
+		GROUP BY DATEPART(YEAR,SentDate)
+		ORDER BY DATEPART(YEAR,SentDate) DESC
+END
+GO
+--select * from ARTICLE
+--EXEC getListArticleInNYears @ssn='1012345', @typeArticle = 'RESEARCH', @nYear = 5;
