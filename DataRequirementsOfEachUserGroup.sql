@@ -532,35 +532,35 @@ END
 GO
 EXEC getNumArticleIn5Years @ssn='1012345';
 ---------------------------------------------------------------------------------------------
--- (iii.11). Xem tổng số bài báo nghiên cứu được đăng mỗi năm trong 5 năm gần đây nhất.
-CREATE PROCEDURE getListResearchArticleAcceptedIn5Years(@ssn VARCHAR(15))
-AS
-BEGIN
-	SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
-	FROM ARTICLE
-	WHERE AuthorSSn=@ssn AND Status='4' AND SentDate > DATEADD(year,-5,GETDATE()) AND ID IN (SELECT ID FROM RESEARCH)
-	GROUP BY DATEPART(YEAR,SentDate)
-	ORDER BY DATEPART(YEAR,SentDate) DESC
-END
-GO
-select * from RESEARCH
-select * from ARTICLE
-EXEC getListResearchArticleAcceptedIn5Years @ssn='1012356';
----------------------------------------------------------------------------------------------
--- (iii.12). Xem tổng số bài báo tổng quan được đăng mỗi năm trong 5 năm gần đây nhất.
-CREATE PROCEDURE getListOverviewArticleAcceptedIn5Years(@ssn VARCHAR(15))
-AS
-BEGIN
-	SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
-	FROM ARTICLE
-	WHERE AuthorSSn=@ssn AND Status='4' AND SentDate > DATEADD(year,-5,GETDATE()) AND ID IN (SELECT ID FROM OVERVIEW)
-	GROUP BY DATEPART(YEAR,SentDate)
-	ORDER BY DATEPART(YEAR,SentDate) DESC
-END
-GO
-select * from OVERVIEW
-select * from ARTICLE
-EXEC getListOverviewArticleAcceptedIn5Years @ssn='1012345';
+---- (iii.11). Xem tổng số bài báo nghiên cứu được đăng mỗi năm trong 5 năm gần đây nhất.
+--CREATE PROCEDURE getListResearchArticleAcceptedIn5Years(@ssn VARCHAR(15))
+--AS
+--BEGIN
+--	SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
+--	FROM ARTICLE
+--	WHERE AuthorSSn=@ssn AND Status='4' AND SentDate > DATEADD(year,-5,GETDATE()) AND ID IN (SELECT ID FROM RESEARCH)
+--	GROUP BY DATEPART(YEAR,SentDate)
+--	ORDER BY DATEPART(YEAR,SentDate) DESC
+--END
+--GO
+--select * from RESEARCH
+--select * from ARTICLE
+--EXEC getListResearchArticleAcceptedIn5Years @ssn='1012356';
+-----------------------------------------------------------------------------------------------
+---- (iii.12). Xem tổng số bài báo tổng quan được đăng mỗi năm trong 5 năm gần đây nhất.
+--CREATE PROCEDURE getListOverviewArticleAcceptedIn5Years(@ssn VARCHAR(15))
+--AS
+--BEGIN
+--	SELECT DATEPART(YEAR,SentDate)Year, COUNT(*)NumberOfArticle
+--	FROM ARTICLE
+--	WHERE AuthorSSn=@ssn AND Status='4' AND SentDate > DATEADD(year,-5,GETDATE()) AND ID IN (SELECT ID FROM OVERVIEW)
+--	GROUP BY DATEPART(YEAR,SentDate)
+--	ORDER BY DATEPART(YEAR,SentDate) DESC
+--END
+--GO
+--select * from OVERVIEW
+--select * from ARTICLE
+--EXEC getListOverviewArticleAcceptedIn5Years @ssn='1012345';
 ---------------------------------------------------------------------------------------------
 -- (iii.13). Xem tổng số bài báo theo loại trong n năm gần nhất.
 CREATE PROCEDURE getListArticleInNYears(@ssn VARCHAR(15), @typeArticle VARCHAR(255), @nYear INT )
